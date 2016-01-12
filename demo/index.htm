@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>share</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=0"/>
+  <style>
+    html,body{
+      font:12px/1.5 Arial;
+    }
+    textarea{
+      display:block;
+      width:90%;
+      height:200px;
+    }
+    form>button,#sub{
+      display:inline-block;
+      padding:0;
+      width:100px;
+      height:30px;
+      background:#FED;
+      font-size:14px;
+      border:1px solid #CBA;
+      border-radius:3px;
+    }
+    #con{
+      position:relative;
+      width:300px;
+    }
+    canvas{
+      display:block;
+    }
+    #v{
+      position:absolute;
+      left:0;
+      right:0;
+      top:0;
+      border-top:1px dashed #FC9;
+      opacity:0.8;
+    }
+    #h{
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:10px;
+      border-left:1px dashed #FC9;
+      opacity:0.8;
+    }
+    #top,#left{
+      position:absolute;
+      left:0;
+      top:0;
+    }
+    #top b{
+      display:inline-block;
+      color:#FFF;
+      background:#39F;
+      margin-left:-50%;
+      font-weight:400;
+      padding:0 3px;
+      border-radius:2px;
+      opacity:0.8;
+    }
+    #middle{
+      position:absolute;
+      left:0;
+      top:0;
+    }
+    #middle b{
+      position:absolute;
+      left:-2px;
+      top:-2px;
+      display:block;
+      width:4px;
+      height:4px;
+      border:1px solid #F33;
+      border-radius:4px;
+      opacity:0.8;
+    }
+    #left b{
+      position:absolute;
+      display:inline-block;
+      color:#FFF;
+      background:#39F;
+      top:-8px;
+      font-weight:400;
+      padding:0 3px;
+      border-radius:2px;
+      opacity:0.8;
+    }
+    #right{
+      position:absolute;
+      right:0;
+      top:0;
+    }
+    #right b{
+      position:absolute;
+      display:inline-block;
+      color:#FFF;
+      background:#39F;
+      top:-8px;
+      right:0;
+      font-weight:400;
+      padding:0 3px;
+      border-radius:2px;
+      opacity:0.8;
+    }
+    #con>span{
+      display:none;
+    }
+    #con.show>span{
+      display:block;
+    }
+  </style>
+</head>
+<body>
+<div id="con">
+  <canvas id="canvas" width="600" height="300" style="width:300px;height:150px;"></canvas>
+  <span id="v"></span>
+  <span id="h"></span>
+  <span id="middle"><b></b></span>
+  <span id="left"><b></b></span>
+  <span id="right"><b></b></span>
+  <span id="top"><b></b></span>
+</div>
+<form>
+  <textarea></textarea>
+  <input type="submit" id="sub"/>
+</form>
+<script src="core.js"></script>
+<script src="event.js"></script>
+<script src="sea.js"></script>
+<script>
+  seajs.use('../init', function(Share) {
+    var search = location.search || '';
+    search = search.replace(/^\?/, '');
+    search = JSON.parse(decodeURIComponent(search) || '{}') || {};
+    search.data = search.data || {};
+    search.data.price = search.data.price || [51.03,50.67,51.73,51.92,50,48.61,51.37,48.1,51.07,49.64,45,51.02,50.3,48.68,50.63,49.48,49.49,50.92,51.72,51.88,48.48,48.41,48.82,51.64,49.78,50.3,50.86,50.85,51.03,51.93,51.53,48.91,48.87,48.25,50.66,51.66,51.67,48.32,48.65,51.5,48.9,49.8,49.84,51.15,48.82,50.93,48.27,50.78,49.19,48.91,51.55,50.49,48.72,50.28,50.35,50.9,49.97,51.79,49.04,50.47,49.14,49.55,49.43,49.76,50.28,51.49,49.15,49.4,50.08,49.47,48.93,48.26,50.52,48.21,50.33,50.34,48.39,49.29,49.88,48.88,50.5,48.64,50.54,51.21,51.32,51.71,48.89,48.66,49.29,49.19,55,50.76,50.56,51.54,51.92,50.3,51.49,51.02,51.55,49.08,48.52,51.51,50.35,50.85,51.74,48.77,49.49,50.76,49.12,51.06,48.04,51.88,51.52,50.85,49.61,50.81,51.6,50.22,51.55,51.99,48.61,49,49.57,51.63,48.13,48.78,49.64,48.07,49.29,50.39,49.23,48.68,51.91,51.78,51.89,48.33,51.37,49.17,48.12,50.33,50.85,49.82,51.55,48.51,50.38,50,49.88,51.62,49.55,49.01,51.29,51.56,49.14,50.97,49.01,49.49,49.94,51.65,49.48,51.34,50.49,49.33,50.08,48.47,48.45,48.75,51.22,51.86,50.2,49.69,51.37,49.56,49.41,49.37,48.63,48.4,51.3,51.52,49.06,49.04,50.69,51.86,48.89,51.52,49.39,48.86,49.88,49.04,50.01,49.27,51.9,50.56,49.9,48.01,51.6,51.27,48.61,50.74,51.71,48.17,50.93,50.73,49.08,51.07,48.51,51.73,48.96,48.34,49.92,48.46,49.5,51.92,51.91,48.06,51.62,48.19,51.37,48.96,49.42,51.99,50.52,50.64,50.15,51.85,49.24,49.28,48.56,49.32,48.67,49.87,50.27,48.5,49.89,50.53,51.89,50.13,48.17,49.25,48.08,51.16];
+    search.data.volume = search.data.volume || [86,68,90,17,65,74,85,72,21,48,40,57,9,45,84,12,69,64,3,46,23,36,80,56,40,53,39,51,59,38,75,41,36,28,9,25,32,20,63,99,82,61,47,14,11,72,87,15,18,80,6,16,31,66,65,18,36,63,10,78,25,15,97,50,54,32,28,97,28,56,19,64,89,70,60,68,66,99,43,24,45,81,24,60,25,60,19,48,24,98,53,30,11,38,44,76,2,49,88,37,75,91,94,61,16,75,6,28,84,60,17,58,78,80,86,64,9,15,20,60,17,52,1,35,42,41,52,19,20,1,37,18,52,19,9,45,28,1,39,31,80,55,13,87,7,39,85,7,47,79,83,15,32,19,25,8,33,86,26,29,38,31,12,76,75,41,55,82,6,38,10,22,79,5,64,2,14,99,11,60,20,49,54,29,65,34,72,47,83,45,35,58,54,17,1,79,37,16,80,51,93,93,13,68,68,80,85,90,54,1,78,22,15,4,17,48,57,93,20,41,12,44,54,26,60,14,64,93,8,80,28,2,36,16,98,27,15,56,70,90];
+    search.data.average = search.data.average || 50;
+    search.lineWidth = search.lineWidth || 1;
+    search.curvature = search.curvature || 1;
+
+    var $textarea = $('textarea');
+    $textarea.val(JSON.stringify(search, null, '  '));
+
+    var $form = $('form');
+    function cb() {
+      location.href = '?' + encodeURIComponent(JSON.stringify(JSON.parse($textarea.val())));
+    }
+    $form.on('submit', function(e) {
+      e.preventDefault();
+      cb();
+    });
+
+    var share = new Share('#canvas', search.data, {
+      width: 600,
+      height: 300,
+      fontSize: 20,
+      lineWidth: search.lineWidth,
+      curvature: search.curvature,
+      style: search.style || 'curve'
+    });
+    var coords = share.coords;
+
+    var $con = $('#con');
+    var $v = $('#v');
+    var $h = $('#h');
+    var $middle = $('#middle');
+    var $left = $('#left');
+    var $right = $('#right');
+    var $top = $('#top');
+
+    var x0 = $con.offset().left;
+    function onStart(e) {
+      e.preventDefault();
+      var x;
+      if(e.type.indexOf('touch') == 0) {
+        x = e.touches[0].pageX - x0;
+      }
+      else {
+        x = e.pageX - x0;
+      }
+      x *= 2;
+      for(var i = 0, len = coords.length; i < len; i++) {
+        if(coords[i][0] >= x) {
+          x = Math.max(10, x);
+          var y = coords[i][1];
+          $v.css('top', y / 2 + 'px');
+          $h.css('left', x / 2 + 'px');
+          $middle.css('top', y / 2 + 'px');
+          $middle.css('left', x / 2 + 'px');
+          $left.css('top', y / 2 + 'px');
+          var v = search.data.price[i]
+          $left.find('b').text(v);
+          $top.css('left', x / 2 + 'px');
+          var index = i;
+          if(index > 120) {
+            index += 90;
+          }
+          index += 30;
+          var h = 9 + Math.floor(index / 60);
+          if(h < 10) {
+            h = '09';
+          }
+          var m = index % 60;
+          if(m < 10) {
+            m = '0' + m;
+          }
+          var time = h + ':' + m;
+          if(time == '11:30') {
+            time = '13:00';
+          }
+          $top.find('b').text(time);
+          var per = ((v - search.data.average) * 100 / search.data.average).toFixed(2);
+          $right.css('top', y / 2 + 'px');
+          $right.find('b').text(per + '%');
+          if(e.type != 'mousemove') {
+            $con.addClass('show');
+          }
+          return;
+        }
+      }
+    }
+    function onEnd() {
+      $con.removeClass('show');
+    }
+    $con.on('touchstart', onStart);
+    $con.on('touchmove', onStart);
+    $con.on('mousedown', onStart);
+    $con.on('mousemove', onStart);
+    $(document.body).on('touchend', onEnd);
+    $(document.body).on('touchcancel', onEnd);
+    $(document.body).on('mouseup', onEnd);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+{
+  "name": "yurine-kline",
+  "version": "0.1.1",
+  "description": "分时图",
+  "maintainers": [
+    {
+      "name": "army8735",
+      "email": "army8735@qq.com"
+    }
+  ],
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/yurine-graphics/kline.git"
+  },
+  "keywords": [
+    "kline"
+  ],
+  "author": "army8735",
+  "license": "MIT",
+  "devDependencies": {
+    "jsdc": "~0.6.9",
+    "gulp": "~3.9.0",
+    "gulp-rename": "~1.2.2",
+    "gulp-rimraf": "^0.1.1",
+    "gulp-util": "~3.0.1"
+  },
+  "spm": {
+    "main": "./index.js",
+    "output": [
+      "./index.js"
+    ]
+  },
+  "readmeFilename": "README.md"
+}

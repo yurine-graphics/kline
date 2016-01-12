@@ -1,0 +1,17 @@
+.yml
+.gitignore
+.gitattributes
+Makefile
+.npmignore
+.spmignore
+tests/
+demo/
+node_modules/
+gulpfile.js
+reports/
+lib/
+dist/
+temp.html
+.log
+logo.jpg
+nightwatch.json
