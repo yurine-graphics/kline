@@ -1,1 +1,1 @@
-module.exports = require('./build/Share')['default'];
+module.exports = require('./build/KLine')['default'];

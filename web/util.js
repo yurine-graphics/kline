@@ -90,32 +90,22 @@ exports["default"]={
       lineHeight:lineHeight
     };
   },
-  rgb2int: function(color) {
-    color = color.replace(/^#/, '');
-    var r = 0;
-    var g = 0;
-    var b = 0;
-    if(color.indexOf('rgb') == 0) {
-      var arr = /(\d+)[^\d]+(\d+)[^\d]+(\d+)/.exec(color);
-      return arr.slice(1).map(function(item) {
-        return parseInt(item);
-      });
-    }
-    else {
-      switch(color.length) {
-        case 3:
-          r = parseInt(color.charAt(0) + color.charAt(0), 16);
-          g = parseInt(color.charAt(1) + color.charAt(1), 16);
-          b = parseInt(color.charAt(2) + color.charAt(2), 16);
-          break;
-        case 6:
-          r = parseInt(color.slice(0, 2), 16);
-          g = parseInt(color.slice(2, 4), 16);
-          b = parseInt(color.slice(4, 6), 16);
-          break;
+  format: function(format, date) {
+    date = new Date(date);
+    var o = {
+      'Y+': date.getFullYear(),
+      'M+': date.getMonth()+1, //month
+      'D+': date.getDate(), //day
+      'h+': date.getHours(), //hour
+      'm+': date.getMinutes(), //minute
+      's+': date.getSeconds(), //second
+    };
+    Object.keys(o).forEach(function(k) {
+      if(new RegExp('(' + k + ')').test(format)) {
+        format = format.replace(RegExp.$1, RegExp.length == 1 ? o[k] : ('00' + o[k]).slice(-RegExp.$1.length));
       }
-    }
-    return [r, g, b];
+    });
+    return format;
   }
 };
 });
