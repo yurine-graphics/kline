@@ -77,10 +77,6 @@ class KLine {
     var y0 = padding[0];
     var y1 = (height - y0 - padding[2]) * 0.7;
     var y2 = height - padding[0] - padding[2] - lineHeight;
-    var yNum = parseInt(this.option.yNum) || 2;
-    yNum = Math.max(yNum, 2);
-    var xNum = parseInt(this.option.xNum) || 2;
-    xNum = Math.max(xNum, 2);
 
     var max = this.data[0].max;
     var min = this.data[0].min;
@@ -91,10 +87,12 @@ class KLine {
 
     var x0 = padding[3];
     var x2 = width - padding[1];
-    var x1 = this.renderY(context, x0, x2, y0, y1, yNum, fontSize, max, min);
-    this.renderX(context, x1, x2, y1, y2, xNum);
+    var x1 = this.renderY(context, x0, x2, y0, y1, fontSize, max, min);
+    this.renderX(context, x1, x2, y0, y1, y2, fontSize, max, min);
   }
-  renderY(context, x0, x2, y0, y1, yNum, fontSize, max, min) {
+  renderY(context, x0, x2, y0, y1, fontSize, max, min) {
+    var yNum = parseInt(this.option.yNum) || 2;
+    yNum = Math.max(yNum, 2);
     var color = this.option.color || '#999';
     if(color.charAt(0) != '#' && color.charAt(0) != 'r') {
       color = '#' + color;
@@ -106,7 +104,7 @@ class KLine {
     var gridColor = this.option.gridColor || '#DDD';
     context.strokeStyle = gridColor;
 
-    var stepY = (y1 - y0) / (yNum - 1);
+    var stepY = (y1 - y0 - fontSize) / (yNum - 1);
     var stepV = Math.abs(max - min) / (yNum - 1);
     var left = 0;
     var vs = [];
@@ -126,7 +124,7 @@ class KLine {
     }
 
     for(var i = 0; i < yNum; i++) {
-      var y = y1 - stepY * i - (fontSize >> 1);
+      var y = y1 - stepY * i - fontSize;
       var v = vs[i];
       var w = ws[i];
       context.fillText(v, x0 + left - w, y);
@@ -135,22 +133,25 @@ class KLine {
     left += 10 + x0;
     context.setLineDash(this.option.yLineDash || [1, 0]);
     for(var i = 0; i < yNum; i++) {
-      var y = y1 - stepY * i;
+      var y = y1 - stepY * i - (fontSize >> 1);
       context.beginPath();
       context.moveTo(left, y);
       context.lineTo(x2, y);
       context.stroke();
+      context.closePath();
     }
 
     return left;
   }
-  renderX(context, x1, x2, y1, y2, xNum) {
+  renderX(context, x1, x2, y0, y1, y2, fontSize, max, min) {
     //去除时分秒，最小单位天数
     var start = new Date(this.option.start);
     start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
     var end = new Date(this.option.end);
     end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 
+    var xNum = parseInt(this.option.xNum) || 2;
+    xNum = Math.max(xNum, 2);
     var stepX = (x2 - x1) / (xNum - 1);
     var stepV = (end - start) / (xNum - 1);
 
@@ -160,19 +161,71 @@ class KLine {
       case 'week':
         break;
       default:
-        this.renderDay(context, x1, x2, y1, y2, stepX, stepV, xNum, start, end);
+        this.renderDay(context, x1, x2, y0, y1, y2, stepX, stepV, xNum, start, fontSize, max, min);
         break;
     }
   }
-  renderDay(context, x1, x2, y1, y2, stepX, stepV, xNum, start, end) {
+  renderDay(context, x1, x2, y0, y1, y2, stepX, stepV, xNum, start, fontSize, max, min) {
     for(var i = 0; i < xNum; i++) {
       var x = x1 + stepX * i;
       var v = util.format('YYYY-MM-DD', +start + stepV * i);
       var w = context.measureText(v).width;
-      x = Math.max(x, x1 + w/ 2);
-      x = Math.min(x, x2  - w/ 2);
-      context.fillText(v, x - w / 2, y2);
+      var w2 = w >> 1;
+      x = Math.max(x, x1 + w2);
+      x = Math.min(x, x2  - w2);
+      context.fillText(v, x - w2, y2);
     }
+
+    var width = x2 - x1;
+    var length = this.data.length;
+    var split = 2;
+    var per = width / length - split;
+    var step = (y1 - y0 - fontSize) / (max - min);
+
+    context.lineWidth = 1;
+    for(var i = 0; i < length; i++) {
+      this.renderItem(context, i, per, split, x1, y0, y1, y2, fontSize, min, step);
+    }
+  }
+  renderItem(context, i, per, split, x1, y0, y1, y2, fontSize, min, step) {
+    var item = this.data[i];
+    var left = x1 + i * (per + split);
+    var middle = left + (per >> 1);
+    var gap = fontSize >> 1;
+    var top = y1 - gap - (item.max - min) * step;
+    var yt = y1 - gap - (Math.max(item.close, item.open) - min) * step;
+    var yb = y1 - gap - (Math.min(item.close, item.open) - min) * step;
+    var bottom = y1 - gap - (item.min - min) * step;
+
+    context.beginPath();
+    if(item.close > item.open) {
+      context.strokeStyle = '#F33';
+      context.rect(left, yb, per - split, yt - yb);
+      context.stroke();
+    }
+    else if(item.close < item.open) {
+      context.strokeStyle = '#3F3';
+      context.fillStyle = '#3F3';
+      context.fillRect(left, yb, per - split, yt - yb);
+    }
+    else {
+      context.strokeStyle = '#333';
+      context.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    }
+    context.closePath();
+
+    context.beginPath();
+    if(item.max > item.close) {
+      context.moveTo(middle, top);
+      context.lineTo(middle, yt);
+      context.stroke();
+    }
+    if(item.min < item.open) {
+      context.moveTo(middle, yb);
+      context.lineTo(middle, bottom);
+      context.stroke();
+    }
+    context.closePath();
   }
 }
 
