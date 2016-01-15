@@ -37,9 +37,6 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
     else {
       padding = [padding, padding, padding, padding];
     }
-    var paddingX = padding[1] + padding[3];
-    var paddingY = padding[0] + padding[2];
-    var minSize = Math.min(width - paddingX, height - paddingY);
 
     var font = self.option.font || 'normal normal normal 12px/1.5 Arial';
     (function(){var _1= util.calFont(font);fontStyle=_1["fontStyle"];fontVariant=_1["fontVariant"];fontFamily=_1["fontFamily"];fontWeight=_1["fontWeight"];fontSize=_1["fontSize"];lineHeight=_1["lineHeight"]}).call(this);
@@ -90,7 +87,7 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
     var xAxis = [];
     xAxis.step = step;
     xAxis.start = start;
-    xAxis.end = xAxis.end;
+    xAxis.end = end;
     xAxis.offset = offset;
     xAxis.number = number;
 
@@ -109,11 +106,11 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
         }
     }
 
-    this.reRender(context, padding, width, height, minSize, fontSize, lineHeight, xAxis, xNum);
+    this.reRender(context, padding, width, height, fontSize, lineHeight, xAxis, xNum);
   }
-  KLine.prototype.reRender = function(context, padding, width, height, minSize, fontSize, lineHeight, xAxis, xNum) {
+  KLine.prototype.reRender = function(context, padding, width, height, fontSize, lineHeight, xAxis, xNum) {
     var y0 = padding[0];
-    var y1 = (height - y0 - padding[2]) * 0.7;
+    var y1 = (height - y0 - padding[2]) * 0.7 + y0;
     var y2 = height - padding[0] - padding[2] - lineHeight;
 
     var max = this.data[xAxis.offset].max;
@@ -165,6 +162,7 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
       left = Math.max(left, w);
     }
 
+    var gap = fontSize / 2;
     for(var i = 0; i < yNum; i++) {
       var y = y1 - stepY * i - fontSize;
       var v = vs[i];
@@ -175,7 +173,7 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
     left += 10 + x0;
     context.setLineDash(this.option.yLineDash || [1, 0]);
     for(var i = 0; i < yNum; i++) {
-      var y = y1 - stepY * i - (fontSize >> 1);
+      var y = y1 - stepY * i - gap;
       context.beginPath();
       context.moveTo(left, y);
       context.lineTo(x2, y);
@@ -232,25 +230,25 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
         continue;
       }
       last = x + xAxis[i].w;
-      context.fillText(v, x, y2 + ((lineHeight - fontSize) >> 1) - i % 3 * 20);
+      context.fillText(v, x, y2 + ((lineHeight - fontSize) / 2));
     }
 
     var step = (y1 - y0 - fontSize) / (max - min);
+    var gap = fontSize / 2;
 
     context.lineWidth = 1;
     for(var i = xAxis.offset, length = Math.min(this.data.length, xAxis.offset + xAxis.number); i < length; i++) {
-      this.renderItem(context, i, xAxis, perItem, split, x1, y1, y2, fontSize, min, step, minVolume, stepVol);
+      this.renderItem(context, i, xAxis, perItem, split, x1, y1 - gap, y2, fontSize, min, step, minVolume, stepVol);
     }
   }
   KLine.prototype.renderItem = function(context, i, xAxis, per, split, x1, y1, y2, fontSize, min, step, minVolume, stepVol) {
     var item = this.data[i];
     var left = x1 + (i - xAxis.offset) * per;
     var middle = left + ((per - split) >> 1);
-    var gap = fontSize >> 1;
-    var top = y1 - gap - (item.max - min) * step;
-    var yt = y1 - gap - (Math.max(item.close, item.open) - min) * step;
-    var yb = y1 - gap - (Math.min(item.close, item.open) - min) * step;
-    var bottom = y1 - gap - (item.min - min) * step;
+    var top = y1 - (item.max - min) * step;
+    var yt = y1 - (Math.max(item.close, item.open) - min) * step;
+    var yb = y1 - (Math.min(item.close, item.open) - min) * step;
+    var bottom = y1 - (item.min - min) * step;
     var volY = (item.volume - minVolume) * stepVol;
 
     context.beginPath();
