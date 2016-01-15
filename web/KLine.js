@@ -106,12 +106,26 @@ define(function(require, exports, module){var util=function(){var _0=require('./
         }
     }
 
+    var color = this.option.color || '#999';
+    if(color.charAt(0) != '#' && color.charAt(0) != 'r') {
+      color = '#' + color;
+    }
+    context.fillStyle = color;
+    this.option.color = color;
+    this.option.rgb = util.rgb2int(color);
+
+    var gridWidth = parseInt(this.option.gridWidth) || 1;
+    gridWidth = Math.max(gridWidth, 1);
+    context.lineWidth = gridWidth;
+    var gridColor = this.option.gridColor || '#DDD';
+    context.strokeStyle = gridColor;
+
     this.reRender(context, padding, width, height, fontSize, lineHeight, xAxis, xNum);
   }
   KLine.prototype.reRender = function(context, padding, width, height, fontSize, lineHeight, xAxis, xNum) {
     var y0 = padding[0];
     var y1 = (height - y0 - padding[2]) * 0.7 + y0;
-    var y2 = height - padding[0] - padding[2] - lineHeight;
+    var y2 = height - padding[0] - lineHeight;
 
     var max = this.data[xAxis.offset].max;
     var min = this.data[xAxis.offset].min;
@@ -132,16 +146,6 @@ define(function(require, exports, module){var util=function(){var _0=require('./
   KLine.prototype.renderY = function(context, x0, x2, y0, y1, fontSize, max, min) {
     var yNum = parseInt(this.option.yNum) || 2;
     yNum = Math.max(yNum, 2);
-    var color = this.option.color || '#999';
-    if(color.charAt(0) != '#' && color.charAt(0) != 'r') {
-      color = '#' + color;
-    }
-    context.fillStyle = color;
-    var gridWidth = parseInt(this.option.gridWidth) || 1;
-    gridWidth = Math.max(gridWidth, 1);
-    context.lineWidth = gridWidth;
-    var gridColor = this.option.gridColor || '#DDD';
-    context.strokeStyle = gridColor;
 
     var stepY = (y1 - y0 - fontSize) / (yNum - 1);
     var stepV = Math.abs(max - min) / (yNum - 1);
@@ -209,10 +213,13 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     //2分查找找到第一个需要渲染的
     var i = util.find2(xAxis, 0, xAxis.length - 1, left, perX);
     var last = -1;
+    var first = true;
+    var rgb = this.option.rgb.join(',');
     for(; i < xAxis.length; i++) {
+      var item = xAxis[i];
       var x = x1 + perX * i + halfItem;
-      var v = xAxis[i].v;
-      var w2 = xAxis[i].w >> 1;
+      var v = item.v;
+      var w2 = item.w >> 1;
       if(x - w2 >= right + x1) {
         break;
       }
@@ -229,7 +236,29 @@ define(function(require, exports, module){var util=function(){var _0=require('./
       if(x <= last) {
         continue;
       }
-      last = x + xAxis[i].w;
+      last = x + item.w;
+      context.fillStyle = this.option.color;
+      //最左
+      if(first) {
+        first = false;
+        if(x < x1) {
+          var gr = context.createLinearGradient(x, 0, x1 + 10, 0);
+          gr.addColorStop(0, 'rgba(' + rgb + ',0.1)');
+          gr.addColorStop((x1-x-10)/(x1-x+10), 'rgba(' + rgb + ',0.3)');
+          gr.addColorStop(1, 'rgba(' + rgb + ',1)');
+          context.fillStyle = gr;
+        }
+      }
+      //最右
+      if(x1 + perX * (i + 1) + halfItem - w2 + item.w >= right + x1) {
+        if(last > x2) {
+          var gr = context.createLinearGradient(x2 - 10, 0, x + item.w, 0);
+          gr.addColorStop(0, 'rgba(' + rgb + ',1)');
+          gr.addColorStop(10/(x + item.w - x2), 'rgba(' + rgb + ',0.3)');
+          gr.addColorStop(1, 'rgba(' + rgb + ',0.1)');
+          context.fillStyle = gr;
+        }
+      }
       context.fillText(v, x, y2 + ((lineHeight - fontSize) / 2));
     }
 
