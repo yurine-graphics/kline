@@ -71,24 +71,66 @@ class KLine {
     font = fontStyle + ' ' + fontVariant + ' ' + fontWeight + ' ' + fontSize + 'px/' + lineHeight + 'px ' + fontFamily;
     context.font = font;
 
-    this.reRender(context, padding, width, height, minSize, fontSize, lineHeight);
+    var offset = this.option.offset || 0;
+    offset = Math.max(offset, 0);
+    offset = Math.min(offset, this.data.length - 1);
+    var number = this.option.number || 1;
+    number = Math.max(number, 1);
+    number = Math.min(number, this.data.length);
+
+    //去除时分秒，最小单位天数
+    var start = new Date(this.option.start);
+    start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    var end = new Date(this.option.end);
+    end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+    var xNum = parseInt(this.option.xNum) || 2;
+    xNum = Math.max(xNum, 2);
+    var step = (end - start) / (xNum - 1);
+    var xAxis = [];
+    xAxis.step = step;
+    xAxis.start = start;
+    xAxis.end = xAxis.end;
+    xAxis.offset = offset;
+    xAxis.number = number;
+
+    switch(this.option.type) {
+      case 'month':
+        break;
+      case 'week':
+        break;
+      default:
+        for(var i = 0; i < xNum; i++) {
+          var v = util.format('YYYY-MM-DD', +start + step * i);
+          xAxis.push({
+            v: v,
+            w: context.measureText(v).width
+          });
+        }
+    }
+
+    this.reRender(context, padding, width, height, minSize, fontSize, lineHeight, xAxis, xNum);
   }
-  reRender(context, padding, width, height, minSize, fontSize, lineHeight) {
+  reRender(context, padding, width, height, minSize, fontSize, lineHeight, xAxis, xNum) {
     var y0 = padding[0];
     var y1 = (height - y0 - padding[2]) * 0.7;
     var y2 = height - padding[0] - padding[2] - lineHeight;
 
-    var max = this.data[0].max;
-    var min = this.data[0].min;
-    for(var i = 0, len = this.data.length; i < len; i++) {
+    var max = this.data[xAxis.offset].max;
+    var min = this.data[xAxis.offset].min;
+    var maxVolume = this.data[xAxis.offset].volume;
+    var minVolume = this.data[xAxis.offset].volume;
+    for(var i = xAxis.offset, len = Math.min(this.data.length, xAxis.offset + xAxis.number); i < len; i++) {
       max = Math.max(this.data[i].max, max);
       min = Math.min(this.data[i].min, min);
+      maxVolume = Math.max(this.data[i].volume, maxVolume);
+      minVolume = Math.min(this.data[i].volume, minVolume);
     }
 
     var x0 = padding[3];
     var x2 = width - padding[1];
     var x1 = this.renderY(context, x0, x2, y0, y1, fontSize, max, min);
-    this.renderX(context, x1, x2, y0, y1, y2, fontSize, max, min);
+    this.renderX(context, xAxis, xNum, x1, x2, y0, y1, y2, fontSize, lineHeight, max, min, maxVolume, minVolume);
   }
   renderY(context, x0, x2, y0, y1, fontSize, max, min) {
     var yNum = parseInt(this.option.yNum) || 2;
@@ -143,17 +185,8 @@ class KLine {
 
     return left;
   }
-  renderX(context, x1, x2, y0, y1, y2, fontSize, max, min) {
-    //去除时分秒，最小单位天数
-    var start = new Date(this.option.start);
-    start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    var end = new Date(this.option.end);
-    end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-
-    var xNum = parseInt(this.option.xNum) || 2;
-    xNum = Math.max(xNum, 2);
-    var stepX = (x2 - x1) / (xNum - 1);
-    var stepV = (end - start) / (xNum - 1);
+  renderX(context, xAxis, xNum, x1, x2, y0, y1, y2, fontSize, lineHeight, max, min, maxVolume, minVolume) {
+    var stepVol = (y2 - y1 - 10) / (maxVolume - minVolume);
 
     switch(this.option.type) {
       case 'month':
@@ -161,52 +194,78 @@ class KLine {
       case 'week':
         break;
       default:
-        this.renderDay(context, x1, x2, y0, y1, y2, stepX, stepV, xNum, start, fontSize, max, min);
+        this.renderDay(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol);
         break;
     }
   }
-  renderDay(context, x1, x2, y0, y1, y2, stepX, stepV, xNum, start, fontSize, max, min) {
-    for(var i = 0; i < xNum; i++) {
-      var x = x1 + stepX * i;
-      var v = util.format('YYYY-MM-DD', +start + stepV * i);
-      var w = context.measureText(v).width;
-      var w2 = w >> 1;
-      x = Math.max(x, x1 + w2);
-      x = Math.min(x, x2  - w2);
-      context.fillText(v, x - w2, y2);
+  renderDay(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol) {
+    var w = x2 - x1;
+    var split = 10;
+    var wa = w * this.data.length / xAxis.number - split;
+    var perX = wa / (xNum - 1);
+    var perItem = (w + split) / xAxis.number;
+    var halfItem = perItem / 2;
+    var left = perItem * xAxis.offset;
+    var right = left + w;
+
+    //2分查找找到第一个需要渲染的
+    var i = util.find2(xAxis, 0, xAxis.length - 1, left, perX);
+    var last = -1;
+    for(; i < xAxis.length; i++) {
+      var x = x1 + perX * i + halfItem;
+      var v = xAxis[i].v;
+      var w2 = xAxis[i].w >> 1;
+      if(x - w2 >= right + x1) {
+        break;
+      }
+      x -= w2 + left;
+      //第一个不能超过最左
+      if(i == 0) {
+        x = Math.max(x, x1 - w2);
+      }
+      //最后一个不能超过最右
+      else if(i == xAxis.length -1) {
+        x = Math.min(x, x2 - w2);
+      }
+      //防止挤在一起
+      if(x <= last) {
+        continue;
+      }
+      last = x + xAxis[i].w;
+      context.fillText(v, x, y2 + ((lineHeight - fontSize) >> 1) - i % 3 * 20);
     }
 
-    var width = x2 - x1;
-    var length = this.data.length;
-    var split = 2;
-    var per = width / length - split;
     var step = (y1 - y0 - fontSize) / (max - min);
 
     context.lineWidth = 1;
-    for(var i = 0; i < length; i++) {
-      this.renderItem(context, i, per, split, x1, y0, y1, y2, fontSize, min, step);
+    for(var i = xAxis.offset, length = Math.min(this.data.length, xAxis.offset + xAxis.number); i < length; i++) {
+      this.renderItem(context, i, xAxis, perItem, split, x1, y1, y2, fontSize, min, step, minVolume, stepVol);
     }
   }
-  renderItem(context, i, per, split, x1, y0, y1, y2, fontSize, min, step) {
+  renderItem(context, i, xAxis, per, split, x1, y1, y2, fontSize, min, step, minVolume, stepVol) {
     var item = this.data[i];
-    var left = x1 + i * (per + split);
-    var middle = left + (per >> 1);
+    var left = x1 + (i - xAxis.offset) * per;
+    var middle = left + ((per - split) >> 1);
     var gap = fontSize >> 1;
     var top = y1 - gap - (item.max - min) * step;
     var yt = y1 - gap - (Math.max(item.close, item.open) - min) * step;
     var yb = y1 - gap - (Math.min(item.close, item.open) - min) * step;
     var bottom = y1 - gap - (item.min - min) * step;
+    var volY = (item.volume - minVolume) * stepVol;
 
     context.beginPath();
     if(item.close > item.open) {
       context.strokeStyle = '#F33';
       context.rect(left, yb, per - split, yt - yb);
       context.stroke();
+      context.rect(left, y2 - volY, per - split, Math.max(1, volY));
+      context.stroke();
     }
     else if(item.close < item.open) {
       context.strokeStyle = '#3F3';
       context.fillStyle = '#3F3';
       context.fillRect(left, yb, per - split, yt - yb);
+      context.fillRect(left, y2 - volY, per - split, Math.max(1, volY));
     }
     else {
       context.strokeStyle = '#333';

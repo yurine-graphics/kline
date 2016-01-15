@@ -31,6 +31,27 @@ function find(context, s, maxWidth, i1, i2, w) {
   }
 }
 
+function find2(xAxis, i, j, left, per) {
+  if(i == j) {
+    return i;
+  }
+  else if(i == j - 1) {
+    var o = xAxis[i];
+    if(per * i + o.w / 2 > left) {
+      return i;
+    }
+    return j;
+  }
+  var m = (i + j) >> 1;
+  var o = xAxis[m];
+  if(per * m + o.w / 2 > left) {
+    return find2(xAxis, i, m, left, per);
+  }
+  else {
+    return find2(xAxis, m, j, left, per);
+  }
+}
+
 exports["default"]={
   isString: isType('String'),
   calHeight: function(context, s, maxWidth) {
@@ -106,5 +127,35 @@ exports["default"]={
       }
     });
     return format;
+  },
+  rgb2int: function(color) {
+    color = color.replace(/^#/, '');
+    var r = 0;
+    var g = 0;
+    var b = 0;
+    if(color.indexOf('rgb') == 0) {
+      var arr = /(\d+)[^\d]+(\d+)[^\d]+(\d+)/.exec(color);
+      return arr.slice(1).map(function(item) {
+        return parseInt(item);
+      });
+    }
+    else {
+      switch(color.length) {
+        case 3:
+          r = parseInt(color.charAt(0) + color.charAt(0), 16);
+          g = parseInt(color.charAt(1) + color.charAt(1), 16);
+          b = parseInt(color.charAt(2) + color.charAt(2), 16);
+          break;
+        case 6:
+          r = parseInt(color.slice(0, 2), 16);
+          g = parseInt(color.slice(2, 4), 16);
+          b = parseInt(color.slice(4, 6), 16);
+          break;
+      }
+    }
+    return [r, g, b];
+  },
+  find2: function(xAxis, i, j, left, per) {
+    return find2(xAxis, i, j, left, per);
   }
 };
