@@ -37,15 +37,12 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     else {
       padding = [padding, padding, padding, padding];
     }
-
     var font = self.option.font || 'normal normal normal 12px/1.5 Arial';
     (function(){var _1= util.calFont(font);fontStyle=_1["fontStyle"];fontVariant=_1["fontVariant"];fontFamily=_1["fontFamily"];fontWeight=_1["fontWeight"];fontSize=_1["fontSize"];lineHeight=_1["lineHeight"]}).call(this);
     context.textBaseline = 'top';
-
     if(self.option.fontSize) {
       fontSize = parseInt(self.option.fontSize) || 12;
     }
-
     if(self.option.lineHeight) {
       lineHeight = self.option.lineHeight;
       if(util.isString(lineHeight)) {
@@ -64,24 +61,20 @@ define(function(require, exports, module){var util=function(){var _0=require('./
       lineHeight = fontSize * 1.5;
     }
     lineHeight = Math.max(lineHeight, fontSize);
-
     font = fontStyle + ' ' + fontVariant + ' ' + fontWeight + ' ' + fontSize + 'px/' + lineHeight + 'px ' + fontFamily;
     context.font = font;
-
-    var offset = this.option.offset || 0;
+    var offset = self.option.offset || 0;
     offset = Math.max(offset, 0);
-    offset = Math.min(offset, this.data.length - 1);
-    var number = this.option.number || 1;
+    offset = Math.min(offset, self.data.length - 1);
+    var number = self.option.number || 1;
     number = Math.max(number, 1);
-    number = Math.min(number, this.data.length);
-
+    number = Math.min(number, self.data.length);
     //去除时分秒，最小单位天数
-    var start = new Date(this.option.start);
+    var start = new Date(self.option.start);
     start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    var end = new Date(this.option.end);
+    var end = new Date(self.option.end);
     end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-
-    var xNum = parseInt(this.option.xNum) || 2;
+    var xNum = parseInt(self.option.xNum) || 2;
     xNum = Math.max(xNum, 2);
     var step = (end - start) / (xNum - 1);
     var xAxis = [];
@@ -90,8 +83,7 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     xAxis.end = end;
     xAxis.offset = offset;
     xAxis.number = number;
-
-    switch(this.option.type) {
+    switch(self.option.type) {
       case 'month':
         break;
       case 'week':
@@ -105,22 +97,98 @@ define(function(require, exports, module){var util=function(){var _0=require('./
           });
         }
     }
-
-    var color = this.option.color || '#999';
+    var color = self.option.color || '#999';
     if(color.charAt(0) != '#' && color.charAt(0) != 'r') {
       color = '#' + color;
     }
     context.fillStyle = color;
-    this.option.color = color;
-    this.option.rgb = util.rgb2int(color);
-
-    var gridWidth = parseInt(this.option.gridWidth) || 1;
+    self.option.color = color;
+    self.option.rgb = util.rgb2int(color);
+    var gridWidth = parseInt(self.option.gridWidth) || 1;
     gridWidth = Math.max(gridWidth, 1);
     context.lineWidth = gridWidth;
-    var gridColor = this.option.gridColor || '#DDD';
+    var gridColor = self.option.gridColor || '#DDD';
     context.strokeStyle = gridColor;
 
-    this.reRender(context, padding, width, height, fontSize, lineHeight, xAxis, xNum);
+    self.reRender(context, padding, width, height, fontSize, lineHeight, xAxis, xNum);
+
+    var mx0 = 0;
+    var mx1 = 0;
+    var distance = 0;
+    var timeout;
+    var num = number;
+    var left = 0;
+    var os = offset;
+    var isMove = false;
+    self.dom.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      if(e.touches[1]) {
+        mx1 = e.touches[1].screenX;
+        distance = Math.abs(mx1 - mx0);
+      }
+      else {
+        mx0 = e.touches[0].screenX;
+      }
+      offset = os;
+      number = num;
+      isMove = true;
+    });
+    document.body.addEventListener('touchmove', function(e) {
+      if(!isMove) {
+        return;
+      }
+      e.preventDefault();
+      if(e.touches[1]) {
+        var mx2 = e.touches[0].screenX;
+        var mx3 = e.touches[1].screenX;
+        var offsetLeft = mx2 - mx0;
+        os = offset;
+        var offsetDistance = Math.abs(mx2 - mx3);
+        num = number;
+        if(Math.abs(offsetLeft - left) >= 20) {
+          os -= Math.floor((offsetLeft - left) / 20);
+          os = Math.max(os, 0);
+          os = Math.min(os, self.data.length - 1);
+        }
+        if(Math.abs(offsetDistance - distance) >= 20) {
+          num -= Math.floor((offsetDistance - distance) / 20);
+          num = Math.max(num, 1);
+          num = Math.min(num, self.data.length - os);
+        }
+        if(os != offset || num != number) {
+          if(timeout) {
+            clearTimeout(timeout);
+          }
+          timeout = setTimeout(function() {
+            xAxis.offset = os;
+            xAxis.number = num;
+            context.fillStyle = color;
+            context.lineWidth = gridWidth;
+            context.strokeStyle = gridColor;
+            context.clearRect(0, 0, width, height);
+            self.reRender(context, padding, width, height, fontSize, lineHeight, xAxis, xNum);
+          }, 10);
+        }
+      }
+    });
+    document.body.addEventListener('touchend', function(e) {
+      if(isMove) {
+        offset = os;
+        number = num;
+        if(e.touches.length == 1) {
+          isMove = false;
+        }
+      }
+    });
+    self.dom.addEventListener('touchcancel', function(e) {
+      if(isMove) {
+        offset = os;
+        number = num;
+        if(e.touches.length == 1) {
+          isMove = false;
+        }
+      }
+    });
   }
   KLine.prototype.reRender = function(context, padding, width, height, fontSize, lineHeight, xAxis, xNum) {
     var y0 = padding[0];
@@ -149,7 +217,7 @@ define(function(require, exports, module){var util=function(){var _0=require('./
 
     var stepY = (y1 - y0 - fontSize) / (yNum - 1);
     var stepV = Math.abs(max - min) / (yNum - 1);
-    var left = 0;
+    var x1 = 0;
     var vs = [];
     var ws = [];
     for(var i = 0; i < yNum; i++) {
@@ -163,7 +231,7 @@ define(function(require, exports, module){var util=function(){var _0=require('./
       vs.push(v);
       var w = context.measureText(v).width;
       ws.push(w);
-      left = Math.max(left, w);
+      x1 = Math.max(x1, w);
     }
 
     var gap = fontSize / 2;
@@ -171,24 +239,24 @@ define(function(require, exports, module){var util=function(){var _0=require('./
       var y = y1 - stepY * i - fontSize;
       var v = vs[i];
       var w = ws[i];
-      context.fillText(v, x0 + left - w, y);
+      context.fillText(v, x0 + x1 - w, y);
     }
 
-    left += 10 + x0;
+    x1 += 10 + x0;
     context.setLineDash(this.option.yLineDash || [1, 0]);
     for(var i = 0; i < yNum; i++) {
       var y = y1 - stepY * i - gap;
       context.beginPath();
-      context.moveTo(left, y);
+      context.moveTo(x1, y);
       context.lineTo(x2, y);
       context.stroke();
       context.closePath();
     }
 
-    return left;
+    return x1;
   }
   KLine.prototype.renderX = function(context, xAxis, xNum, x1, x2, y0, y1, y2, fontSize, lineHeight, max, min, maxVolume, minVolume) {
-    var stepVol = (y2 - y1 - 10) / (maxVolume - minVolume);
+    var stepVol = (y2 - y1 - 11) / (maxVolume - minVolume);
 
     switch(this.option.type) {
       case 'month':
@@ -202,11 +270,11 @@ define(function(require, exports, module){var util=function(){var _0=require('./
   }
   KLine.prototype.renderDay = function(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol) {
     var w = x2 - x1;
-    var split = 10;
-    var wa = w * this.data.length / xAxis.number - split;
-    var perX = wa / (xNum - 1);
-    var perItem = (w + split) / xAxis.number;
-    var halfItem = perItem / 2;
+    var split = w / (4 * xAxis.number - 1);
+    var perItem = split * 4;
+    var wa = perItem * this.data.length - split;
+    var halfItem = (perItem - split) / 2;
+    var perX = wa / xNum;
     var left = perItem * xAxis.offset;
     var right = left + w;
 
@@ -217,34 +285,33 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     var rgb = this.option.rgb.join(',');
     for(; i < xAxis.length; i++) {
       var item = xAxis[i];
-      var x = x1 + perX * i + halfItem;
+      var x = perX * i + halfItem;
       var v = item.v;
-      var w2 = item.w >> 1;
-      if(x - w2 >= right + x1) {
+      var w2 = item.w / 2;
+      if(x - w2 >= right) {
         break;
       }
-      x -= w2 + left;
+      x += x1 - w2 - left;
       //第一个不能超过最左
       if(i == 0) {
-        x = Math.max(x, x1 - w2);
+        x = Math.max(x, w2);
       }
       //最后一个不能超过最右
       else if(i == xAxis.length -1) {
         x = Math.min(x, x2 - w2);
       }
-      //防止挤在一起
-      if(x <= last) {
+      if(x < last) {
         continue;
       }
       last = x + item.w;
       context.fillStyle = this.option.color;
       //最左
-      if(first) {
+      if(first && xAxis.offset != 0) {
         first = false;
         if(x < x1) {
           var gr = context.createLinearGradient(x, 0, x1 + 10, 0);
           gr.addColorStop(0, 'rgba(' + rgb + ',0.1)');
-          gr.addColorStop((x1-x-10)/(x1-x+10), 'rgba(' + rgb + ',0.3)');
+          gr.addColorStop(Math.max(0.1, (x1-x-10)/(x1-x+10)), 'rgba(' + rgb + ',0.3)');
           gr.addColorStop(1, 'rgba(' + rgb + ',1)');
           context.fillStyle = gr;
         }
@@ -254,7 +321,7 @@ define(function(require, exports, module){var util=function(){var _0=require('./
         if(last > x2) {
           var gr = context.createLinearGradient(x2 - 10, 0, x + item.w, 0);
           gr.addColorStop(0, 'rgba(' + rgb + ',1)');
-          gr.addColorStop(10/(x + item.w - x2), 'rgba(' + rgb + ',0.3)');
+          gr.addColorStop(Math.min(0.9, 10/(x + item.w - x2)), 'rgba(' + rgb + ',0.3)');
           gr.addColorStop(1, 'rgba(' + rgb + ',0.1)');
           context.fillStyle = gr;
         }
@@ -267,10 +334,10 @@ define(function(require, exports, module){var util=function(){var _0=require('./
 
     context.lineWidth = 1;
     for(var i = xAxis.offset, length = Math.min(this.data.length, xAxis.offset + xAxis.number); i < length; i++) {
-      this.renderItem(context, i, xAxis, perItem, split, x1, y1 - gap, y2, fontSize, min, step, minVolume, stepVol);
+      this.renderItem(context, i, xAxis, perItem, split, x1, y1 - gap, y2, min, step, minVolume, stepVol);
     }
   }
-  KLine.prototype.renderItem = function(context, i, xAxis, per, split, x1, y1, y2, fontSize, min, step, minVolume, stepVol) {
+  KLine.prototype.renderItem = function(context, i, xAxis, per, split, x1, y1, y2, min, step, minVolume, stepVol) {
     var item = this.data[i];
     var left = x1 + (i - xAxis.offset) * per;
     var middle = left + ((per - split) >> 1);
@@ -285,14 +352,14 @@ define(function(require, exports, module){var util=function(){var _0=require('./
       context.strokeStyle = '#F33';
       context.rect(left, yb, per - split, yt - yb);
       context.stroke();
-      context.rect(left, y2 - volY, per - split, Math.max(1, volY));
+      context.rect(left, y2 - volY, per - split, volY + 1);
       context.stroke();
     }
     else if(item.close < item.open) {
-      context.strokeStyle = '#3F3';
-      context.fillStyle = '#3F3';
+      context.strokeStyle = '#3A7';
+      context.fillStyle = '#3A7';
       context.fillRect(left, yb, per - split, yt - yb);
-      context.fillRect(left, y2 - volY, per - split, Math.max(1, volY));
+      context.fillRect(left, y2 - volY, per - split, volY + 1);
     }
     else {
       context.strokeStyle = '#333';

@@ -7,6 +7,7 @@
   <style>
     html,body{
       font:12px/1.5 Arial;
+      word-break:break-all;
     }
     textarea{
       display:block;
@@ -153,10 +154,10 @@
       width: 600,
       height: 300,
       fontSize: 20,
-      padding:[10, 60, 10, 10],
+      padding:[10, 10, 10, 10],
       lineWidth: search.lineWidth || 1,
       curvature: search.curvature || 1,
-      xNum: search.xNum || 100,
+      xNum: search.xNum || 25,
       yNum: search.yNum || 4,
       type: search.type,
       start: search.start || Date.now() - 1000 * 3600 * 24 * 100,
