@@ -77,7 +77,7 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     var xNum = parseInt(self.option.xNum) || 2;
     xNum = Math.max(xNum, 2);
     var step = (end - start) / (xNum - 1);
-    var xAxis = [];
+    var xAxis = this.xAxis = [];
     xAxis.step = step;
     xAxis.start = start;
     xAxis.end = end;
@@ -145,13 +145,13 @@ define(function(require, exports, module){var util=function(){var _0=require('./
         os = offset;
         var offsetDistance = Math.abs(mx2 - mx3);
         num = number;
-        if(Math.abs(offsetLeft - left) >= 20) {
-          os -= Math.floor((offsetLeft - left) / 20);
+        if(Math.abs(offsetLeft - left) >= 10) {
+          os -= Math.floor((offsetLeft - left) / 10);
           os = Math.max(os, 0);
           os = Math.min(os, self.data.length - 1);
         }
-        if(Math.abs(offsetDistance - distance) >= 20) {
-          num -= Math.floor((offsetDistance - distance) / 20);
+        if(Math.abs(offsetDistance - distance) >= 10) {
+          num -= Math.floor((offsetDistance - distance) / 10);
           num = Math.max(num, 1);
           num = Math.min(num, self.data.length - os);
         }
@@ -207,8 +207,8 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     }
 
     var x0 = padding[3];
-    var x2 = width - padding[1];
-    var x1 = this.renderY(context, x0, x2, y0, y1, fontSize, max, min);
+    var x2 = this.x2 = width - padding[1];
+    var x1 = this.x1 = this.renderY(context, x0, x2, y0, y1, fontSize, max, min);
     this.renderX(context, xAxis, xNum, x1, x2, y0, y1, y2, fontSize, lineHeight, max, min, maxVolume, minVolume);
   }
   KLine.prototype.renderY = function(context, x0, x2, y0, y1, fontSize, max, min) {
@@ -271,9 +271,9 @@ define(function(require, exports, module){var util=function(){var _0=require('./
   KLine.prototype.renderDay = function(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol) {
     var w = x2 - x1;
     var split = w / (4 * xAxis.number - 1);
-    var perItem = split * 4;
+    var perItem = this.perItem = split * 4;
     var wa = perItem * this.data.length - split;
-    var halfItem = (perItem - split) / 2;
+    var halfItem = this.halfItem = (perItem - split) / 2;
     var perX = wa / xNum;
     var left = perItem * xAxis.offset;
     var right = left + w;
@@ -379,6 +379,23 @@ define(function(require, exports, module){var util=function(){var _0=require('./
       context.stroke();
     }
     context.closePath();
+  }
+  KLine.prototype.getCoord = function(x) {
+    var xAxis = this.xAxis;
+    var x1 = this.x1;
+    if(x <= x1) {
+      return {
+        x: this.halfItem + x1,
+        date: util.format('YYYY-MM-DD', +xAxis.start + 1000 * 3600 * 24 * xAxis.offset)
+      };
+    }
+    x = Math.min(x, this.x2);
+    var diff = x - x1;
+    var n = Math.floor(diff / this.perItem);
+    return {
+      x: this.halfItem + n * this.perItem + x1,
+      date: util.format('YYYY-MM-DD', +xAxis.start + 1000 * 3600 * 24 * (xAxis.offset + n))
+    };
   }
 
 

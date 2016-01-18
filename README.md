@@ -41,7 +41,9 @@ npm install yurine-kline
      - volumeColor:String 圆柱颜色
      - curvature:float 曲线曲率，∈\[0, 1]
      - style:\<String> 绘线类型，取值curve、straight，默认straight
- * getCoords():\<Array> 获取绘制点的坐标，是个二维数组，包含所有线条
+ * getCoord(x:Number):Object 获取当前坐标的数据，注意高清屏乘除2倍
+   - x:Number 当前数据条的中点坐标
+   - date:String 当前数据条的日期
 
 # License
 [MIT License]

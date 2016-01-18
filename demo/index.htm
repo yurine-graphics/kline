@@ -31,14 +31,6 @@
     canvas{
       display:block;
     }
-    #v{
-      position:absolute;
-      left:0;
-      right:0;
-      top:0;
-      border-top:1px dashed #FC9;
-      opacity:0.8;
-    }
     #h{
       position:absolute;
       left:0;
@@ -47,7 +39,7 @@
       border-left:1px dashed #FC9;
       opacity:0.8;
     }
-    #top,#left{
+    #top{
       position:absolute;
       left:0;
       top:0;
@@ -61,50 +53,7 @@
       padding:0 3px;
       border-radius:2px;
       opacity:0.8;
-    }
-    #middle{
-      position:absolute;
-      left:0;
-      top:0;
-    }
-    #middle b{
-      position:absolute;
-      left:-2px;
-      top:-2px;
-      display:block;
-      width:4px;
-      height:4px;
-      border:1px solid #F33;
-      border-radius:4px;
-      opacity:0.8;
-    }
-    #left b{
-      position:absolute;
-      display:inline-block;
-      color:#FFF;
-      background:#39F;
-      top:-8px;
-      font-weight:400;
-      padding:0 3px;
-      border-radius:2px;
-      opacity:0.8;
-    }
-    #right{
-      position:absolute;
-      right:0;
-      top:0;
-    }
-    #right b{
-      position:absolute;
-      display:inline-block;
-      color:#FFF;
-      background:#39F;
-      top:-8px;
-      right:0;
-      font-weight:400;
-      padding:0 3px;
-      border-radius:2px;
-      opacity:0.8;
+      white-space:nowrap;
     }
     #con>span{
       display:none;
@@ -117,11 +66,7 @@
 <body>
 <div id="con">
   <canvas id="canvas" width="600" height="300" style="width:300px;height:150px;"></canvas>
-  <span id="v"></span>
   <span id="h"></span>
-  <span id="middle"><b></b></span>
-  <span id="left"><b></b></span>
-  <span id="right"><b></b></span>
   <span id="top"><b></b></span>
 </div>
 <form>
@@ -165,15 +110,9 @@
       offset: search.offset || 0,
       number: search.number || 10
     });
-    return;
-    var coords = kline.coords;
 
     var $con = $('#con');
-    var $v = $('#v');
     var $h = $('#h');
-    var $middle = $('#middle');
-    var $left = $('#left');
-    var $right = $('#right');
     var $top = $('#top');
 
     var x0 = $con.offset().left;
@@ -186,45 +125,12 @@
       else {
         x = e.pageX - x0;
       }
-      x *= 2;
-      for(var i = 0, len = coords.length; i < len; i++) {
-        if(coords[i][0] >= x) {
-          x = Math.max(10, x);
-          var y = coords[i][1];
-          $v.css('top', y / 2 + 'px');
-          $h.css('left', x / 2 + 'px');
-          $middle.css('top', y / 2 + 'px');
-          $middle.css('left', x / 2 + 'px');
-          $left.css('top', y / 2 + 'px');
-          var v = search.data.price[i]
-          $left.find('b').text(v);
-          $top.css('left', x / 2 + 'px');
-          var index = i;
-          if(index > 120) {
-            index += 90;
-          }
-          index += 30;
-          var h = 9 + Math.floor(index / 60);
-          if(h < 10) {
-            h = '09';
-          }
-          var m = index % 60;
-          if(m < 10) {
-            m = '0' + m;
-          }
-          var time = h + ':' + m;
-          if(time == '11:30') {
-            time = '13:00';
-          }
-          $top.find('b').text(time);
-          var per = ((v - search.data.average) * 100 / search.data.average).toFixed(2);
-          $right.css('top', y / 2 + 'px');
-          $right.find('b').text(per + '%');
-          if(e.type != 'mousemove') {
-            $con.addClass('show');
-          }
-          return;
-        }
+      var item = kline.getCoord(x * 2);
+      $h.css('left', item.x / 2 + 'px');
+      $top.css('left', item.x / 2 + 'px');
+      $top.find('b').text(item.date);
+      if(e.type != 'mousemove') {
+        $con.addClass('show');
       }
     }
     function onEnd() {
