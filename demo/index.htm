@@ -118,6 +118,10 @@
     var x0 = $con.offset().left;
     function onStart(e) {
       e.preventDefault();
+      if(e.touches[1]) {
+        $con.removeClass('show');
+        return;
+      }
       var x;
       if(e.type.indexOf('touch') == 0) {
         x = e.touches[0].pageX - x0;
@@ -133,8 +137,13 @@
         $con.addClass('show');
       }
     }
-    function onEnd() {
-      $con.removeClass('show');
+    function onEnd(e) {
+      if(e.touches[1]) {
+        $con.addClass('show');
+      }
+      else {
+        $con.removeClass('show');
+      }
     }
     $con.on('touchstart', onStart);
     $con.on('touchmove', onStart);
