@@ -1,7 +1,7 @@
 {
   "name": "yurine-kline",
-  "version": "0.1.1",
-  "description": "分时图",
+  "version": "0.1.0",
+  "description": "k线图",
   "maintainers": [
     {
       "name": "army8735",
