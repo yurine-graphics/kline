@@ -85,8 +85,13 @@ class KLine {
     xAxis.number = number;
     switch(self.option.type) {
       case 'month':
-        break;
-      case 'week':
+        for(var i = 0; i < xNum; i++) {
+          var v = util.format('YYYY-MM', +start + step * i);
+          xAxis.push({
+            v: v,
+            w: context.measureText(v).width
+          });
+        }
         break;
       default:
         for(var i = 0; i < xNum; i++) {
