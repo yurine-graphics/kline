@@ -200,16 +200,23 @@ class KLine {
     var maxVolume = this.data[xAxis.offset].volume;
     var minVolume = this.data[xAxis.offset].volume;
     for(var i = xAxis.offset, len = Math.min(this.data.length, xAxis.offset + xAxis.number); i < len; i++) {
-      max = Math.max(this.data[i].max, max);
-      min = Math.min(this.data[i].min, min);
-      maxVolume = Math.max(this.data[i].volume, maxVolume);
-      minVolume = Math.min(this.data[i].volume, minVolume);
+      max = Math.max(this.data[i].max || 0, max);
+      max = Math.max(this.data[i].ma5 || 0, max);
+      max = Math.max(this.data[i].ma10 || 0, max);
+      max = Math.max(this.data[i].ma20 || 0, max);
+      min = Math.min(this.data[i].min || 0, min);
+      min = Math.min(this.data[i].ma5 || 0, min);
+      min = Math.min(this.data[i].ma10 || 0, min);
+      min = Math.min(this.data[i].ma20 || 0, min);
+      maxVolume = Math.max(this.data[i].volume || 0, maxVolume);
+      minVolume = Math.min(this.data[i].volume || 0, minVolume);
     }
 
     var x0 = padding[3];
     var x2 = this.x2 = width - padding[1];
     var x1 = this.x1 = this.renderY(context, x0, x2, y0, y1, fontSize, max, min);
-    this.renderX(context, xAxis, xNum, x1, x2, y0, y1, y2, fontSize, lineHeight, max, min, maxVolume, minVolume);
+    var stepVol = (y2 - y1 - 11) / (maxVolume - minVolume);
+    this.renderX(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol);
   }
   renderY(context, x0, x2, y0, y1, fontSize, max, min) {
     var yNum = parseInt(this.option.yNum) || 2;
@@ -255,20 +262,7 @@ class KLine {
 
     return x1;
   }
-  renderX(context, xAxis, xNum, x1, x2, y0, y1, y2, fontSize, lineHeight, max, min, maxVolume, minVolume) {
-    var stepVol = (y2 - y1 - 11) / (maxVolume - minVolume);
-
-    switch(this.option.type) {
-      case 'month':
-        break;
-      case 'week':
-        break;
-      default:
-        this.renderDay(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol);
-        break;
-    }
-  }
-  renderDay(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol) {
+  renderX(context, xAxis, x1, x2, y0, y1, y2, xNum, fontSize, lineHeight, max, min, minVolume, stepVol) {
     var w = x2 - x1;
     var split = w / (4 * xAxis.number - 1);
     var perItem = this.perItem = split * 4;
@@ -333,8 +327,18 @@ class KLine {
     var gap = fontSize / 2;
 
     context.lineWidth = 1;
+    var arr = [];
     for(var i = xAxis.offset, length = Math.min(this.data.length, xAxis.offset + xAxis.number); i < length; i++) {
-      this.renderItem(context, i, xAxis, perItem, split, x1, y1 - gap, y2, min, step, minVolume, stepVol);
+      arr.push(this.renderItem(context, i, xAxis, perItem, split, x1, y1 - gap, y2, min, step, minVolume, stepVol));
+    }
+    if(this.option.ma5) {
+      this.maLine(context, arr, 'ma5', util.isString(this.option.ma5) ? this.option.ma5 : '#f1b94d');
+    }
+    if(this.option.ma10) {
+      this.maLine(context, arr, 'ma10', util.isString(this.option.ma10) ? this.option.ma10 : '#f1b94d');
+    }
+    if(this.option.ma20) {
+      this.maLine(context, arr, 'ma20', util.isString(this.option.ma20) ? this.option.ma20 : '#f1b94d');
     }
   }
   renderItem(context, i, xAxis, per, split, x1, y1, y2, min, step, minVolume, stepVol) {
@@ -378,6 +382,44 @@ class KLine {
       context.lineTo(middle, bottom);
       context.stroke();
     }
+    context.closePath();
+
+    var res = {};
+    if(this.option.ma5) {
+      res.ma5 = {
+        x: middle,
+        y: y1 - (item.ma5 - min) * step
+      };
+    }
+    if(this.option.ma10) {
+      res.ma10 = {
+        x: middle,
+        y: y1 - (item.ma10 - min) * step
+      };
+    }
+    if(this.option.ma20) {
+      res.ma20 = {
+        x: middle,
+        y: y1 - (item.ma20 - min) * step
+      };
+    }
+    return res;
+  }
+  maLine(context, arr, key, color) {
+    context.strokeStyle = color;
+    context.beginPath();
+    arr.forEach(function(item, i) {
+      var o = item[key];
+      var x = o.x;
+      var y = o.y;console.log(y)
+      if(i) {
+        context.lineTo(x, y);
+      }
+      else {
+        context.moveTo(x, y);
+      }
+    });
+    context.stroke();
     context.closePath();
   }
   getCoord(x) {
