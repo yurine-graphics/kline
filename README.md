@@ -42,6 +42,7 @@ npm install yurine-kline
      - ma20:String ma5线色，不填不绘
  * getCoord(x:Number):Object 获取当前坐标的数据，注意高清屏乘除2倍
    - x:Number 当前数据条的中点坐标
+   - index:int 索引
    - date:String 当前数据条的日期
 
 # License
