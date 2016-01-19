@@ -85,8 +85,13 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     xAxis.number = number;
     switch(self.option.type) {
       case 'month':
-        break;
-      case 'week':
+        for(var i = 0; i < xNum; i++) {
+          var v = util.format('YYYY-MM', +start + step * i);
+          xAxis.push({
+            v: v,
+            w: context.measureText(v).width
+          });
+        }
         break;
       default:
         for(var i = 0; i < xNum; i++) {
@@ -411,7 +416,7 @@ define(function(require, exports, module){var util=function(){var _0=require('./
     arr.forEach(function(item, i) {
       var o = item[key];
       var x = o.x;
-      var y = o.y;console.log(y)
+      var y = o.y;
       if(i) {
         context.lineTo(x, y);
       }

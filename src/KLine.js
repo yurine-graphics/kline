@@ -416,7 +416,7 @@ class KLine {
     arr.forEach(function(item, i) {
       var o = item[key];
       var x = o.x;
-      var y = o.y;console.log(y)
+      var y = o.y;
       if(i) {
         context.lineTo(x, y);
       }
