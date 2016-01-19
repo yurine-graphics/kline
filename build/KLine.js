@@ -83,7 +83,7 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
     xAxis.end = end;
     xAxis.offset = offset;
     xAxis.number = number;
-    switch(self.option.type) {
+    switch(self.option.type.toLowerCase()) {
       case 'month':
         for(var i = 0; i < xNum; i++) {
           var v = util.format('YYYY-MM', +start + step * i);
@@ -433,7 +433,7 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
     if(x <= x1) {
       return {
         x: this.halfItem + x1,
-        date: util.format('YYYY-MM-DD', +xAxis.start + 1000 * 3600 * 24 * xAxis.offset)
+        date: util.format(this.option.type.toLowerCase() == 'month' ? 'YYYY-MM' : 'YYYY-MM-DD', +xAxis.start + 1000 * 3600 * 24 * xAxis.offset)
       };
     }
     x = Math.min(x, this.x2);
@@ -441,7 +441,7 @@ var util=function(){var _0=require('./util');return _0.hasOwnProperty("default")
     var n = Math.floor(diff / this.perItem);
     return {
       x: this.halfItem + n * this.perItem + x1,
-      date: util.format('YYYY-MM-DD', +xAxis.start + 1000 * 3600 * 24 * (xAxis.offset + n))
+      date: util.format(this.option.type.toLowerCase() == 'month' ? 'YYYY-MM' : 'YYYY-MM-DD', +xAxis.start + 1000 * 3600 * 24 * (xAxis.offset + n))
     };
   }
 
